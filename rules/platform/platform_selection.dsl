@@ -52,7 +52,7 @@ rule ui_design:
   trigger=user requests UI design, mockup, wireframe, screen layout, or any visual UI task
   trigger=project requires UI component, page layout, or visual styling
   action=load design/penpot.dsl and follow its rules in full
-  action=verify Penpot MCP server is accessible at http://localhost:4401/mcp
+  action=verify Penpot MCP server is accessible at http://localhost:{penpot_mcp_port}/mcp
   action=prompt user to connect Penpot plugin if not connected
   action=if MCP server unavailable: fallback to explicit user approval (P1)
   forbidden=bypassing Penpot for UI design work

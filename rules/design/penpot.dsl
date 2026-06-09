@@ -2,17 +2,18 @@
 # Purpose: Design-first workflow using Penpot as the designated UI design tool.
 # Penpot uses HTTP-based MCP (not stdio) — requires plugin in browser + local MCP server.
 # All UI design work MUST be done in Penpot before any code is written.
+# {penpot_mcp_port} = port determined by Docker configuration (default: 4401)
 
 rule design_first_workflow:
   priority=high
   trigger=any project requiring UI, mockup, wireframe, screen layout, or visual design
   action=1. Design FIRST in Penpot (design.penpot.app) — all screens, components, tokens
-  action=2. User runs start-penpot.bat (double-click) to launch MCP + plugin servers
+  action=2. Run Penpot MCP server via Docker (official Docker image). Do NOT install Penpot MCP directly.
   action=3. In Penpot browser: Plugins → Load from URL → http://localhost:4400/manifest.json
   action=4. In Penpot plugin: click "Connect to MCP server" (connects via ws://localhost:4402)
   action=5. Once connected, AI extracts design context via MCP HTTP endpoint
   action=6. Write code based on design specifications
-  verified=Penpot MCP server responds at http://localhost:4401/mcp
+  verified=Penpot MCP server responds at http://localhost:{penpot_mcp_port}/mcp
   verified=Penpot plugin shows "Connected" status
   forbidden=writing UI code before Penpot design is complete and verified
   forbidden=guessing colors, spacing, layouts without referencing Penpot
@@ -20,8 +21,8 @@ rule design_first_workflow:
 rule mcp_availability:
   priority=high
   trigger=user requests UI design task or code generation from design
-  action=verify Penpot MCP server: GET http://localhost:4401/mcp returns 200 or MCP response
-  action=if MCP not responding: tell user "Penpot MCP server is not running. Please run start-penpot.bat."
+  action=verify Penpot MCP server: GET http://localhost:{penpot_mcp_port}/mcp returns 200 or MCP response
+  action=if MCP not responding: tell user "Penpot MCP server is not running. Please start via Docker (official image)."
   action=after server starts: ask user to load plugin in Penpot and connect
   action=if user confirms server cannot be started:
     action=request explicit P1 approval: "Proceed without Penpot? Colors/spacing will need manual input."
@@ -32,7 +33,7 @@ rule mcp_availability:
 rule design_extraction:
   priority=high
   trigger=AI needs to read design context before generating code
-  action=POST http://localhost:4401/mcp with design extraction request
+  action=POST http://localhost:{penpot_mcp_port}/mcp with design extraction request
   action=extract: layout structure, color tokens, typography, spacing, component hierarchy
   action=OUTPUT FORMAT:
     colors: { "--color-primary": "...", "--color-bg": "..." }
@@ -41,14 +42,15 @@ rule design_extraction:
     components: [{ name, variants: [...], states: [...], children: [...] }]
     layout: { screens: [{ name, width, height, elements: [...] }] }
   action=document tokens in code-compatible format (CSS vars, Tailwind config, theme object)
-  note=MCP endpoint uses Streamable HTTP transport at http://localhost:4401/mcp
+  note=MCP endpoint uses Streamable HTTP transport at http://localhost:{penpot_mcp_port}/mcp
 
 rule penpot_servers:
   priority=medium
-  note=Two servers must run simultaneously for Penpot MCP to work
-  note=server_info: MCP server at http://localhost:4401/mcp (ws://localhost:4402); Plugin server at http://localhost:4400
-  action=Start via: double-click %PENPOT_HOME%\start-penpot.bat (or C:\Users\KO\.penpot\start-penpot.bat)
-  action=Stop via: double-click %PENPOT_HOME%\stop-penpot.bat
+  note=Penpot MCP server MUST be run via Docker (official Docker image). Do NOT install or run directly.
+  note=Two servers run inside the Docker container for Penpot MCP to work
+  note=server_info: MCP server at http://localhost:{penpot_mcp_port}/mcp (ws://localhost:4402); Plugin server at http://localhost:4400
+  action=Start via: docker run [official-penpot-mcp-image]
+  action=Stop via: docker stop [container-name]
 
 rule design_tokens:
   priority=high
@@ -81,7 +83,7 @@ rule design_complete_checklist:
 rule design_to_code_gate:
   priority=high
   trigger=Penpot design complete check passed, about to generate UI code
-  action=1. Run design extraction via MCP POST http://localhost:4401/mcp
+  action=1. Run design extraction via MCP POST http://localhost:{penpot_mcp_port}/mcp
   action=2. Convert extracted tokens to code-compatible format (CSS vars / Tailwind / theme object)
   action=3. Write token definitions to project files (e.g. src/styles/theme.ts)
   action=4. Report to user: "Penpot design extracted. Tokens committed to project."

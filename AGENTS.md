@@ -194,7 +194,8 @@ Do not continue guessing.
 
 * Any project involving UI/visual elements MUST complete Penpot design before writing any code.
 * "Design complete" requires ALL of: (1) every screen layout defined, (2) color palette tokens defined, (3) typography system defined, (4) spacing grid defined, (5) component hierarchy and variants defined.
-* UI code MUST NOT be written if Penpot MCP server (http://localhost:4401/mcp) is unresponsive.
+* UI code MUST NOT be written if Penpot MCP server (http://localhost:{penpot_mcp_port}/mcp) is unresponsive. Port is determined by Docker configuration.
+* Penpot MCP server MUST be run via Docker. Do not install Penpot MCP directly — use the official Docker image.
 * Fallback: if Penpot MCP server cannot be started, MUST ask USER for explicit approval before writing UI code. Even with fallback approval, design tokens MUST be obtained from USER directly — no guessing.
 * Design tokens (colors, typography, spacing) extracted from Penpot are the single source of truth.
 * No other design tools (Figma, Sketch, etc.) permitted unless USER explicitly approves.
